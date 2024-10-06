@@ -19,6 +19,9 @@ export const saveJiraAvatars = () => {
   const avatarFilteredSources = avatarSources.filter((el) => !el.includes("universal_avatar"));
 
   console.log("avatars", avatarFilteredSources);
+  localStorage.setItem("avatarSources", JSON.stringify(avatarFilteredSources));
+  localStorage.setItem("seenAvatarIndexes", JSON.stringify([]));
+
   return avatarFilteredSources;
 };
 
