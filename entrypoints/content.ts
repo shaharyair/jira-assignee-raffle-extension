@@ -12,6 +12,10 @@ export default defineContentScript({
         const componentParent = document.querySelector(
           '[data-testid="software-filters.ui.list-filter-container"]'
         ) as HTMLElement;
+        if (!componentParent) {
+          console.error("Jira Extension: Parent element not found, cannot render component");
+          return;
+        }
         createVNodeAndRenderComponent(RandomAvatar, componentParent);
       }, 1000);
     }
