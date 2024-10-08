@@ -69,7 +69,7 @@ onMounted(() => {
 
 <template>
     <div class="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2">
-        <div class="relative w-14">
+        <div class="relative w-16">
             <div @click="onRandomClick"
                 :class="[{ 'w-full aspect-square overflow-hidden rounded-full flex justify-center items-center cursor-pointer text-white p-0.5': true }, { 'border-2 border-[#0A66E4]': randomAvatarIndex >= 0 }]">
                 <div v-if="randomAvatarIndex < 0"
