@@ -1,8 +1,8 @@
 import { ContentScriptContext } from "wxt/client";
-import { createVNodeAndRenderComponent } from "../utils";
 import RandomAvatar from "../components/randomAvatar.vue";
 import "./popup/style.css";
 import "primeicons/primeicons.css";
+import { VueUtils } from "../utils/vue/utils";
 
 export default defineContentScript({
   matches: ["*://firstoffer.atlassian.net/*"],
@@ -16,7 +16,7 @@ export default defineContentScript({
           console.error("Jira Extension: Parent element not found, cannot render component");
           return;
         }
-        createVNodeAndRenderComponent(RandomAvatar, componentParent);
+        VueUtils.createVNodeAndRenderComponent(RandomAvatar, componentParent);
       }, 1000);
     }
   },

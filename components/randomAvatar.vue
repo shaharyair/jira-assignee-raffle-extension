@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { randomIntegerInRange } from '@/utils';
 import { JiraUtils } from '../utils/jira/utils';
+import { GlobaUtils } from '../utils/globalUtils';
 
 enum AvatarRandomSettings {
     LOADING_DELAY = 2000
@@ -12,7 +12,7 @@ const randomAvatarIndex = ref<number>(-1);
 const loading = ref<boolean>(false);
 
 const randomizeAvatarIndex = () => {
-    return randomIntegerInRange(0, avatarSources.value.length - 1);
+    return GlobaUtils.randomIntegerInRange(0, avatarSources.value.length - 1);
 }
 
 const randomizeAvatar = () => {
