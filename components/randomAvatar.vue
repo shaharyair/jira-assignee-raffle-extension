@@ -1,5 +1,10 @@
 <script setup lang="ts">
 import { randomIntegerInRange } from '@/utils';
+import { JiraUtils } from '../utils/jira/utils';
+
+enum AvatarRandomSettings {
+    LOADING_DELAY = 2000
+}
 
 const avatarSources = ref<string[]>([]);
 const seenAvatarIndexes = ref<Set<number>>(new Set());
@@ -15,6 +20,7 @@ const randomizeAvatar = () => {
         randomAvatarIndex.value = -1;
         seenAvatarIndexes.value.clear();
         localStorage.setItem('seenAvatarIndexes', JSON.stringify([]));
+        JiraUtils.triggerAvatarSelection('');
         return;
     }
 
@@ -26,7 +32,7 @@ const randomizeAvatar = () => {
     randomAvatarIndex.value = newIndex;
     seenAvatarIndexes.value.add(newIndex);
     localStorage.setItem('seenAvatarIndexes', JSON.stringify(Array.from(seenAvatarIndexes.value)));
-
+    JiraUtils.triggerAvatarSelection(avatarSources.value[randomAvatarIndex.value]);
     console.log('Random avatar index:', randomAvatarIndex.value);
 }
 
@@ -35,7 +41,7 @@ const onRandomClick = () => {
     setTimeout(() => {
         randomizeAvatar();
         loading.value = false;
-    }, 1000);
+    }, AvatarRandomSettings.LOADING_DELAY);
 }
 
 onMounted(() => {

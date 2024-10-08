@@ -1,6 +1,6 @@
 <script lang="ts" setup>
+import { JiraUtils } from '@/utils/jira/utils';
 import Button from 'primevue/button';
-import { sendSaveAvatarsAction } from '../../utils';
 
 const loading = ref<boolean>(false);
 const status = ref({
@@ -9,7 +9,7 @@ const status = ref({
 
 const onRefetchClick = () => {
   loading.value = true;
-  sendSaveAvatarsAction()
+  JiraUtils.sendSaveAvatarsEvent();
   setTimeout(() => {
     status.value.saved = true;
     loading.value = false;
@@ -24,6 +24,6 @@ const onRefetchClick = () => {
 <template>
   <div class="w-48 p-4 flex flex-col gap-2 justify-center items-center bg-zinc-800">
     <Button @click="onRefetchClick" :loading="loading" severity="primary" label="Refetch" rounded />
-    <div v-if="status.saved">Saved!</div>
+    <div v-if="status.saved">Script Executed!</div>
   </div>
 </template>
