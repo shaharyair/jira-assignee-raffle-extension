@@ -1,4 +1,3 @@
-import { ContentScriptContext } from "wxt/client";
 import RandomAvatar from "../components/randomAvatar.vue";
 import "./popup/style.css";
 import "primeicons/primeicons.css";
@@ -6,7 +5,7 @@ import { VueUtils } from "../utils/vue/utils";
 
 export default defineContentScript({
   matches: ["*://firstoffer.atlassian.net/*"],
-  main(ctx: ContentScriptContext) {
+  main(ctx) {
     if (ctx.isValid) {
       setTimeout(() => {
         const componentParent = document.querySelector(
