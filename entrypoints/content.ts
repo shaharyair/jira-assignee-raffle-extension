@@ -4,6 +4,10 @@ import "primeicons/primeicons.css";
 import { VueUtils } from "../utils/vue/utils";
 import { JiraQuerySelectors } from "../utils/jira/types";
 
+enum ContentScriptSettings {
+  LOADING_DELAY = 2000,
+}
+
 export default defineContentScript({
   matches: ["*://firstoffer.atlassian.net/*"],
   main(ctx) {
@@ -15,7 +19,7 @@ export default defineContentScript({
           return;
         }
         VueUtils.createVNodeAndRenderComponent(RandomAvatar, componentParent);
-      }, 1000);
+      }, ContentScriptSettings.LOADING_DELAY);
     }
   },
 });
