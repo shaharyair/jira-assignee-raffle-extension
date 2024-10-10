@@ -1,4 +1,5 @@
-import { EventActions } from "../../types";
+import { ChromeUtils } from "../chrome/utils";
+import { EventActions } from "../chrome/types";
 import { AvatarsMenuToggle } from "./types";
 
 export class JiraUtils {
@@ -98,20 +99,10 @@ export class JiraUtils {
   }
 
   static attachSaveAvatarsEventListeners() {
-    const activeTabQueryOptions = { active: true, currentWindow: true };
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-      if (request.action === EventActions.SAVE_AVATARS) {
-        chrome.tabs.query(activeTabQueryOptions).then((tabs) => {
-          chrome.scripting.executeScript({
-            target: { tabId: tabs?.[0]?.id as number },
-            files : ['saveJiraAvatars.js'],
-          });
-        });
-      }
-    });
+    ChromeUtils.addEventListener(EventActions.SAVE_AVATARS, ChromeUtils.executeScriptOnActiveTab, ["saveJiraAvatars.js"]);
   }
 
   static sendSaveAvatarsEvent() {
-    chrome.runtime.sendMessage({ action: EventActions.SAVE_AVATARS });
+    ChromeUtils.sendEvent(EventActions.SAVE_AVATARS);
   }
 }
