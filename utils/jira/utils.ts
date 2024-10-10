@@ -1,6 +1,8 @@
 import { ChromeUtils } from "../chrome/utils";
 import { EventActions } from "../chrome/types";
 import { AvatarsMenuToggle, JiraQuerySelectors } from "./types";
+import { VueUtils } from "../vue/utils";
+import RandomAvatar from "../../components/randomAvatar.vue";
 
 export class JiraUtils {
   static saveJiraAvatars() {
@@ -102,5 +104,14 @@ export class JiraUtils {
 
   static sendSaveAvatarsEvent() {
     ChromeUtils.sendEvent(EventActions.SAVE_AVATARS);
+  }
+
+  static renderJiraRandomButtonComponent() {
+    const componentParent = document.querySelector(JiraQuerySelectors.JIRA_FILTER_MENU_BAR) as HTMLElement;
+    if (!componentParent) {
+      console.error("Jira Extension: Parent element not found, cannot render component");
+      return;
+    }
+    VueUtils.createVNodeAndRenderComponent(RandomAvatar, componentParent);
   }
 }
