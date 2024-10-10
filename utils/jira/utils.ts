@@ -1,6 +1,6 @@
 import { ChromeUtils } from "../chrome/utils";
 import { EventActions } from "../chrome/types";
-import { AvatarsMenuToggle } from "./types";
+import { AvatarsMenuToggle, JiraQuerySelectors } from "./types";
 
 export class JiraUtils {
   static saveJiraAvatars() {
@@ -18,39 +18,35 @@ export class JiraUtils {
   }
 
   static getAvatarImgSources() {
-    return Array.from(
-      document.querySelectorAll('[data-vc="filters.ui.filters.assignee.stateless.avatar.ak-avatar--image"]')
-    );
+    return Array.from(document.querySelectorAll(JiraQuerySelectors.AVATAR_IMAGES));
   }
 
   static getHiddenAvatarImgSources() {
     this.toggleMoreAvatarsMenu(AvatarsMenuToggle.SHOW);
-    return Array.from(document.querySelectorAll('[data-vc="avatar-image"]'));
+    return Array.from(document.querySelectorAll(JiraQuerySelectors.HIDDEN_AVATAR_IMAGES));
   }
 
   static getAvatarButtons() {
     return Array.from(
-      (document.querySelectorAll('[aria-label="assignee filter avatar"]') as NodeListOf<HTMLElement>) || []
+      (document.querySelectorAll(JiraQuerySelectors.AVATAR_BUTTONS) as NodeListOf<HTMLElement>) || []
     );
   }
 
   static getHiddenAvatarButtons() {
     this.toggleMoreAvatarsMenu(AvatarsMenuToggle.SHOW);
-    const moreAvatarsMenu = document.querySelectorAll('[id^="ds--dropdown"]');
+    const moreAvatarsMenu = document.querySelectorAll(JiraQuerySelectors.MORE_AVATARS_MENU);
     if (!moreAvatarsMenu.length) {
       console.error("More avatars menu not found");
       return [];
     }
     return Array.from(moreAvatarsMenu).flatMap((menu) =>
-      Array.from(menu.querySelectorAll('[role="menuitemcheckbox"]'))
+      Array.from(menu.querySelectorAll(JiraQuerySelectors.HIDDEN_AVATAR_BUTTONS))
     ) as HTMLElement[];
   }
 
   static toggleMoreAvatarsMenu(action: AvatarsMenuToggle) {
-    const moreAvatarsMenu = document.querySelectorAll('[id^="ds--dropdown"]');
-    const button = document.querySelector(
-      '[data-test-id="filters.ui.filters.assignee.stateless.show-more-button.assignee-filter-show-more"]'
-    ) as HTMLElement;
+    const moreAvatarsMenu = document.querySelectorAll(JiraQuerySelectors.MORE_AVATARS_MENU);
+    const button = document.querySelector(JiraQuerySelectors.SHOW_MORE_AVATARS_MENU_BUTTON) as HTMLElement;
     if (action === AvatarsMenuToggle.SHOW && !moreAvatarsMenu.length) {
       button?.click();
     }
@@ -64,7 +60,7 @@ export class JiraUtils {
   }
 
   static clearAvatarSelection() {
-    const clearButtonParent = document.querySelector('[data-testid="filters.ui.filters.clear-button.ak-button"]');
+    const clearButtonParent = document.querySelector(JiraQuerySelectors.CLEAR_FILTERS_BUTTON);
     if (!clearButtonParent) {
       return;
     }
@@ -99,7 +95,9 @@ export class JiraUtils {
   }
 
   static attachSaveAvatarsEventListeners() {
-    ChromeUtils.addEventListener(EventActions.SAVE_AVATARS, ChromeUtils.executeScriptOnActiveTab, ["saveJiraAvatars.js"]);
+    ChromeUtils.addEventListener(EventActions.SAVE_AVATARS, ChromeUtils.executeScriptOnActiveTab, [
+      "saveJiraAvatars.js",
+    ]);
   }
 
   static sendSaveAvatarsEvent() {
