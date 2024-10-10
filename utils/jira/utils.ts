@@ -113,5 +113,6 @@ export class JiraUtils {
       return;
     }
     VueUtils.createVNodeAndRenderComponent(RandomAvatar, componentParent);
+    console.log("Jira Extension: Loaded");
   }
 }
