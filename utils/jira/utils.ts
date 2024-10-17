@@ -1,8 +1,6 @@
-import { ChromeUtils } from "../chrome/utils";
-import { EventActions } from "../chrome/types";
-import { AvatarsMenuToggle, JiraQuerySelectors } from "./types";
-import { VueUtils } from "../vue/utils";
 import RandomAvatar from "../../components/randomAvatar.vue";
+import { VueUtils } from "../vue/utils";
+import { AvatarsMenuToggle, JiraQuerySelectors } from "./types";
 
 export class JiraUtils {
   static saveJiraAvatars() {
@@ -94,16 +92,6 @@ export class JiraUtils {
   static triggerAvatarSelection(imgSrcToMatch: string) {
     this.clearAvatarSelection();
     this.selectAvatarFilter(imgSrcToMatch);
-  }
-
-  static attachSaveAvatarsEventListeners() {
-    ChromeUtils.addEventListener(EventActions.SAVE_AVATARS, ChromeUtils.executeScriptOnActiveTab, [
-      "saveJiraAvatars.js",
-    ]);
-  }
-
-  static sendSaveAvatarsEvent() {
-    ChromeUtils.sendEvent(EventActions.SAVE_AVATARS);
   }
 
   static renderJiraRandomButtonComponent() {

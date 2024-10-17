@@ -1,5 +1,6 @@
-import { JiraUtils } from "../utils/jira/utils";
+import { ChromeUtils } from "@/utils/chrome/utils";
+import { EventActions } from "@/utils/chrome/types";
 
 export default defineBackground(() => {
-  JiraUtils.attachSaveAvatarsEventListeners();
+  ChromeUtils.addEventListener(EventActions.SAVE_AVATARS, ChromeUtils.executeScriptOnActiveTab, ["saveJiraAvatars.js",]);
 });

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { JiraUtils } from '@/utils/jira/utils';
+import { EventActions } from '@/utils/chrome/types';
+import { ChromeUtils } from '@/utils/chrome/utils';
 import Button from 'primevue/button';
 
 const loading = ref<boolean>(false);
@@ -9,7 +10,7 @@ const status = ref({
 
 const onRefetchClick = () => {
   loading.value = true;
-  JiraUtils.sendSaveAvatarsEvent();
+  ChromeUtils.sendEvent(EventActions.SAVE_AVATARS);
   setTimeout(() => {
     status.value.saved = true;
     loading.value = false;
