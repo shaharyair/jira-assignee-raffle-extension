@@ -4,7 +4,7 @@ import "./popup/style.css";
 import "primeicons/primeicons.css";
 
 export default defineContentScript({
-  matches: ["*://firstoffer.atlassian.net/*"],
+  matches: [ContentScriptSettings.MATCH_URL as string],
   main(ctx) {
     if (ctx.isValid) {
       setTimeout(() => {
