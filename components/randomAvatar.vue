@@ -3,7 +3,7 @@ import { JiraUtils } from '../utils/jira/utils';
 import { GlobaUtils } from '../utils/globalUtils';
 
 enum AvatarRandomSettings {
-    LOADING_DELAY = 2000
+    LOADING_DELAY = 1000
 }
 
 const avatarSources = ref<string[]>([]);
