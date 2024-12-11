@@ -9,7 +9,7 @@ export enum JiraQuerySelectors {
   HIDDEN_AVATAR_IMAGES = '[data-vc="avatar-image"]',
   AVATAR_BUTTONS = '[aria-label="assignee filter avatar"]',
   HIDDEN_AVATAR_BUTTONS = '[role="menuitemcheckbox"]',
-  MORE_AVATARS_MENU = '[id^="ds--dropdown"]',
-  SHOW_MORE_AVATARS_MENU_BUTTON = '[data-test-id="filters.ui.filters.assignee.stateless.show-more-button.assignee-filter-show-more"]',
+  MORE_AVATARS_MENU = '[id^="ds--dropdown--"]',
+  SHOW_MORE_AVATARS_MENU_BUTTON = '[data-testid="filters.ui.filters.assignee.stateless.show-more-button.assignee-filter-show-more"]',
   CLEAR_FILTERS_BUTTON = '[data-testid="filters.ui.filters.clear-button.ak-button"]',
 }
