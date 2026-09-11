@@ -5,8 +5,9 @@ export default defineConfig({
   modules: ["@wxt-dev/module-vue"],
   manifest: {
     name: "Jira Assignee Raffle",
-    description: "Picks a random assignee on a Jira board and applies them as a filter.",
-    version: "0.2.0",
+    description:
+      "Slot-machine raffle for Jira boards: spin the dice, land on a random assignee, filter the board to them.",
+    version: "0.3.0",
     permissions: ["storage"],
   },
 });

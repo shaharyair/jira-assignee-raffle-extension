@@ -7,13 +7,35 @@ has had a turn, then a new round starts.
 Draw state is stored per board in `chrome.storage.local`, so two boards keep
 independent rounds and a reload does not restart one.
 
+## The draw
+
+Clicking the dice runs a slot machine: the button grows, avatars blur past it and
+decelerate onto the winner while the filter is being applied, then the ring flashes
+gold, confetti bursts, the page shakes and a winner banner slides in. A gold arc
+around the button tracks how much of the round is used up.
+
+The reel animates to a single precomputed offset (Web Animations API), so it always
+stops exactly on the assignee that was already picked. The animation never decides
+the winner. Celebration overlays are appended to `document.body`, not to the Vue
+container, so they survive Jira rebuilding the filter row mid-spin.
+
+Sounds are synthesized with WebAudio (no audio files) and are **off by default**.
+Everything above collapses to a plain, instant button under
+`prefers-reduced-motion: reduce`.
+
+## Popup
+
+The toolbar popup lists the rounds in progress per board, resets them all with one
+button, and toggles sound. Settings live in `chrome.storage.local` and the content
+script picks them up through `storage.onChanged`, no reload needed.
+
 ## Develop
 
 ```bash
 npm install
 npm run dev      # loads a dev browser with the extension
 npm run compile  # type check
-npm test         # raffle logic
+npm test         # raffle + reel logic
 npm run build    # -> .output/chrome-mv3
 ```
 

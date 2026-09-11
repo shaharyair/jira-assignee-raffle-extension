@@ -2,7 +2,7 @@
   "name": "jira-assignee-raffle-extension",
   "description": "Randomly picks an assignee on a Jira board and applies them as a filter.",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -12,7 +12,7 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "vue-tsc --noEmit",
-    "test": "node --test utils/raffle.test.ts",
+    "test": "node --test utils/*.test.ts",
     "postinstall": "wxt prepare"
   },
   "dependencies": {
