@@ -10,11 +10,6 @@ const COLORS = ["#0c66e4", "#ffc400", "#ff5630", "#36b37e", "#8777d9", "#00b8d9"
 const CSS = `
 @keyframes jr-confetti { to { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)); opacity: 0 } }
 @keyframes jr-shockwave { to { transform: translate(-50%,-50%) scale(9); opacity: 0 } }
-@keyframes jr-shake {
-  10%,90% { transform: translate(-2px,1px) }
-  30%,70% { transform: translate(3px,-2px) }
-  50% { transform: translate(-3px,2px) }
-}
 .jr-fx { position: fixed; z-index: 2147483647; pointer-events: none }
 `;
 
@@ -79,7 +74,4 @@ export const shockwave = (x: number, y: number) =>
     800,
   );
 
-export function shake() {
-  document.body.style.animation = "jr-shake .2s ease-in-out";
-  setTimeout(() => (document.body.style.animation = ""), 220);
-}
+

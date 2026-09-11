@@ -11,16 +11,23 @@ independent rounds and a reload does not restart one.
 ## The draw
 
 Clicking the dice opens a vintage Vegas one-armed bandit over the page: chrome shell,
-bulb-lit crown, three reels and a lever you drag down (or hit Enter on). Release past
-60% of the lever's travel and it latches; anything shorter springs back. The reels
-stop left to right 300ms apart, and roughly a third of the time the last one hangs a
-frame short before creeping the winner in. Then the payline lights, the award plate
-names the winner, confetti bursts and the page shakes. A gold arc around the button
+bulb-lit crown, three reels and an arm you drag down (or hit Enter on). The handle
+swings past horizontal on its pivot, so the ball finishes below the mount like a real
+bandit's; release past 60% of its travel and it latches, anything shorter springs
+back. The reels stop left to right 420ms apart.
+
+**Half the pulls miss.** The reels land mismatched, the strip reads NO MATCH, and the
+handle re-arms for another go. A miss is decided before the draw, so it costs nobody
+their turn. On a win the three faces match, the payline lights, the award plate names
+the winner, confetti bursts and the cabinet jolts; roughly a third of winning spins
+hang the last reel a frame short first. The machine stays open either way, so you can
+keep pulling for the next assignee until you close it. A gold arc around the button
 tracks how much of the round is used up, and the button keeps the winner's avatar in
 a gold ring with a dice badge.
 
-**Nothing is drawn until the lever is pulled.** Opening the cabinet and closing it
-again leaves storage untouched, so nobody's turn is burned by a change of mind.
+**Nothing is drawn until a pull actually lands.** Opening the cabinet, missing, or
+closing it again all leave storage untouched, so nobody's turn is burned by a change
+of mind or a losing spin.
 **The cabinet never dismisses itself** either: it stays up, win or not, until the ✕
 in the top-right corner (or Esc) is used. Each reel animates to a single precomputed
 offset (Web Animations API) that always ends on the already-picked assignee,
@@ -33,7 +40,11 @@ Vue container, so they survive Jira rebuilding the filter row mid-spin.
 Sounds are synthesized with WebAudio (no audio files) and are **off by default**.
 Under `prefers-reduced-motion: reduce` the cabinet still opens (it is the
 interaction, not decoration) but the reels snap instead of spinning, with no blur,
-near-miss, bulb flicker, confetti or shake.
+near-miss, bulb flicker, confetti or jolt.
+
+The jolt is applied to the cabinet, never to `document.body`: a transform on the body
+would become the containing block for the fixed overlay and drag the whole machine
+with it.
 
 ## Popup
 

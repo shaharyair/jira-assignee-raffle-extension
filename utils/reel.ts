@@ -2,11 +2,11 @@
 
 /** Height of one reel frame in px; must match `.jr-window` in machine.ts. */
 export const REEL_ITEM = 96;
-const REEL_LENGTH = 24;
+const REEL_LENGTH = 34;
 
 /** First reel's spin, in ms. Later reels stop `REEL_STAGGER` apart. */
-export const SPIN_MS = 1600;
-export const REEL_STAGGER = 300;
+export const SPIN_MS = 2600;
+export const REEL_STAGGER = 420;
 /** Near-miss tease: hold one frame short, then creep the winner in. */
 const HOLD_MS = 200;
 const CREEP_MS = 380;

@@ -12,7 +12,7 @@
 
 /** Cabinet artboard. 1 SVG unit == 1 CSS px, so overlays can use these directly. */
 export const CAB_W = 380;
-export const CAB_H = 470;
+export const CAB_H = 486;
 
 /** Reel window geometry, shared with the CSS that positions the live reels. */
 export const WINDOW_X = 40;
@@ -20,10 +20,12 @@ export const WINDOW_Y = 176;
 export const WINDOW_GAP = 6;
 
 /** Award plate and credit strip, where machine.ts drops its live text. */
-export const PANEL_Y = 316;
+export const PANEL_Y = 332;
 export const PANEL_H = 52;
-export const LED_Y = 386;
-export const LED_H = 24;
+export const LED_X = 58;
+export const LED_W = 264;
+export const LED_Y = 400;
+export const LED_H = 28;
 
 /** Crown bulbs, laid along the arch. */
 const BULBS = Array.from({ length: 13 }, (_, i) => {
@@ -75,9 +77,9 @@ export const CABINET_SVG = `
   </defs>
 
   <!-- Chrome shell: domed crown over a straight cabinet -->
-  <path d="M20 132C20 66 96 26 190 26s170 40 170 106v296a16 16 0 0 1-16 16H36a16 16 0 0 1-16-16z"
+  <path d="M20 132C20 66 96 26 190 26s170 40 170 106v312a16 16 0 0 1-16 16H36a16 16 0 0 1-16-16z"
         fill="url(#jr-chrome)" filter="url(#jr-drop)"/>
-  <path d="M20 132C20 66 96 26 190 26s170 40 170 106v296a16 16 0 0 1-16 16H36a16 16 0 0 1-16-16z"
+  <path d="M20 132C20 66 96 26 190 26s170 40 170 106v312a16 16 0 0 1-16 16H36a16 16 0 0 1-16-16z"
         fill="none" stroke="#4a515b" stroke-width="2"/>
 
   <!-- Red enamel crown face, ringed by bulbs -->
@@ -100,9 +102,9 @@ export const CABINET_SVG = `
   <path d="M24 224l14-9v18z" fill="#ffd85e" stroke="#7c0a13" stroke-width="1.5"/>
   <path d="M356 224l-14-9v18z" fill="#ffd85e" stroke="#7c0a13" stroke-width="1.5"/>
 
-  <!-- Coin head, centred between the reels and the award plate -->
-  <rect x="168" y="288" width="44" height="20" rx="5" fill="url(#jr-chrome-v)"/>
-  <rect x="184" y="293" width="12" height="10" rx="2" fill="#14171c"/>
+  <!-- Coin head, right-hand side between the reels and the award plate -->
+  <rect x="282" y="294" width="50" height="22" rx="6" fill="url(#jr-chrome-v)"/>
+  <rect x="300" y="300" width="14" height="10" rx="2" fill="#14171c"/>
 
   <!-- Award plate: gold frame, black face (winner name is HTML over this) -->
   <rect x="${WINDOW_X - 8}" y="${PANEL_Y - 8}" width="${CAB_W - 2 * (WINDOW_X - 8)}" height="${PANEL_H + 16}"
@@ -111,12 +113,12 @@ export const CABINET_SVG = `
         rx="5" fill="#160b0b"/>
 
   <!-- Credit strip -->
-  <rect x="96" y="${LED_Y - 4}" width="188" height="${LED_H + 8}" rx="5" fill="#07090d"
+  <rect x="${LED_X}" y="${LED_Y}" width="${LED_W}" height="${LED_H}" rx="5" fill="#07090d"
         stroke="url(#jr-chrome-v)" stroke-width="3"/>
 
   <!-- Coin tray across the foot -->
-  <rect x="40" y="424" width="300" height="26" rx="7" fill="url(#jr-tray)"/>
-  <rect x="40" y="424" width="300" height="26" rx="7" fill="none" stroke="url(#jr-chrome-v)" stroke-width="3"/>
+  <rect x="40" y="440" width="300" height="26" rx="7" fill="url(#jr-tray)"/>
+  <rect x="40" y="440" width="300" height="26" rx="7" fill="none" stroke="url(#jr-chrome-v)" stroke-width="3"/>
 </svg>
 `;
 

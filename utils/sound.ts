@@ -48,6 +48,12 @@ export const clunk = () => beep(140, 0.14, "square", 0.06);
 export const teeter = () =>
   [880, 660, 880, 660].forEach((f, i) => beep(f, 0.06, "triangle", 0.035, i * 0.05));
 
+/** Mismatched reels: the deflating no-win thud. */
+export const dud = () => {
+  beep(196, 0.16, "triangle", 0.05);
+  beep(147, 0.26, "triangle", 0.045, 0.12);
+};
+
 /** Three matching faces on the payline. */
 export const payline = () =>
   [784, 988, 1319].forEach((f, i) => beep(f, 0.18, "square", 0.05, i * 0.09));
