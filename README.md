@@ -10,26 +10,30 @@ independent rounds and a reload does not restart one.
 
 ## The draw
 
-Clicking the dice opens the cabinet over the page: three reels, a marquee and a
-lever you drag down (or hit Enter on). Release past 60% of the lever's travel and it
-latches; anything shorter springs back. The reels stop left to right 300ms apart,
-and roughly a third of the time the last one hangs a frame short before creeping the
-winner in. Then the payline lights, the plate names the winner, confetti bursts and
-the page shakes. A gold arc around the button tracks how much of the round is used
-up, and the button keeps the winner's avatar in a gold ring with a dice badge.
+Clicking the dice opens a vintage Vegas one-armed bandit over the page: chrome shell,
+bulb-lit crown, three reels and a lever you drag down (or hit Enter on). Release past
+60% of the lever's travel and it latches; anything shorter springs back. The reels
+stop left to right 300ms apart, and roughly a third of the time the last one hangs a
+frame short before creeping the winner in. Then the payline lights, the award plate
+names the winner, confetti bursts and the page shakes. A gold arc around the button
+tracks how much of the round is used up, and the button keeps the winner's avatar in
+a gold ring with a dice badge.
 
-**Nothing is drawn until the lever is pulled.** Opening the cabinet and dismissing it
-(Esc or a backdrop click) leaves storage untouched, so nobody's turn is burned by a
-change of mind. Each reel animates to a single precomputed offset (Web Animations
-API) that always ends on the already-picked assignee, near-miss included: the
-animation never decides the winner. The cabinet and the celebration overlays are
-appended to `document.body`, not to the Vue container, so they survive Jira
-rebuilding the filter row mid-spin.
+**Nothing is drawn until the lever is pulled.** Opening the cabinet and closing it
+again leaves storage untouched, so nobody's turn is burned by a change of mind.
+**The cabinet never dismisses itself** either: it stays up, win or not, until the ✕
+in the top-right corner (or Esc) is used. Each reel animates to a single precomputed
+offset (Web Animations API) that always ends on the already-picked assignee,
+near-miss included: the animation never decides the winner, and the travel runs under
+one deceleration curve so it never speeds back up before it stops. The cabinet is
+inline SVG artwork (`utils/cabinet.ts`) with the live reels positioned in its window
+cut-outs; it and the celebration overlays are appended to `document.body`, not to the
+Vue container, so they survive Jira rebuilding the filter row mid-spin.
 
 Sounds are synthesized with WebAudio (no audio files) and are **off by default**.
 Under `prefers-reduced-motion: reduce` the cabinet still opens (it is the
 interaction, not decoration) but the reels snap instead of spinning, with no blur,
-near-miss, confetti or shake.
+near-miss, bulb flicker, confetti or shake.
 
 ## Popup
 

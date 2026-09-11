@@ -10,6 +10,19 @@
  */
 import { confetti, shake, shockwave } from "./effects";
 import type { Assignee } from "./jira";
+import {
+  CAB_H,
+  CAB_W,
+  CABINET_SVG,
+  GLASS_SVG,
+  LED_H,
+  LED_Y,
+  PANEL_H,
+  PANEL_Y,
+  WINDOW_GAP,
+  WINDOW_X,
+  WINDOW_Y,
+} from "./cabinet";
 import { REEL_ITEM, reelFrames, reelStrip, spinMs } from "./reel";
 import { chime, clunk, drumroll, lever, payline, teeter, tick } from "./sound";
 
@@ -18,83 +31,107 @@ const REELS = 3;
 const MAX_TRAVEL = 80;
 const LATCH_TRAVEL = MAX_TRAVEL * 0.6;
 const NEAR_MISS_CHANCE = 0.35;
-const CLOSE_AFTER_WIN_MS = 1600;
 
+/* The cabinet is SVG artwork (cabinet.ts); CSS only positions the live parts
+   over it: the reels in their windows, the neon/LED text, and the lever. */
 const CSS = `
-@keyframes jr-bulbs { to { background-position: 32px 0 } }
-@keyframes jr-cab-in { from { transform: translateY(24px) scale(.92); opacity: 0 } }
+@keyframes jr-cab-in { from { transform: translateY(28px) scale(.94); opacity: 0 } }
+@keyframes jr-bulbs { 0%, 100% { opacity: 1 } 50% { opacity: .3 } }
 @keyframes jr-payline-hit {
-  0%, 100% { opacity: 1; box-shadow: 0 0 18px 2px #ffc400 }
-  50% { opacity: .45; box-shadow: 0 0 6px 0 #ffc400 }
+  0%, 100% { opacity: 1; box-shadow: 0 0 16px 2px #ff3b3b }
+  50% { opacity: .3; box-shadow: 0 0 4px 0 #ff3b3b }
 }
 .jr-machine {
   position: fixed; inset: 0; z-index: 2147483646;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(9,15,30,.72); backdrop-filter: blur(6px);
+  background: radial-gradient(circle at 50% 40%, rgba(60,14,14,.5), rgba(6,5,7,.9));
+  backdrop-filter: blur(6px);
   font: 500 14px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 .jr-cab {
-  position: relative; width: 520px; max-width: calc(100vw - 48px);
-  padding: 0 0 26px; border-radius: 24px;
-  background: linear-gradient(180deg, #1b2440, #0d1428);
-  border: 3px solid #ffc400;
-  box-shadow: 0 30px 80px rgba(0,0,0,.6), inset 0 0 60px rgba(255,196,0,.12);
-  animation: jr-cab-in .32s cubic-bezier(.2,.9,.3,1.2);
+  position: relative; width: ${CAB_W}px; height: ${CAB_H}px;
+  animation: jr-cab-in .34s cubic-bezier(.2,.9,.3,1.2);
 }
-.jr-marquee {
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  height: 54px; border-radius: 20px 20px 0 0;
-  color: #ffdf6e; font-weight: 800; letter-spacing: .22em; font-size: 15px;
-  background: repeating-linear-gradient(90deg, rgba(255,196,0,.85) 0 6px, transparent 6px 16px) 0 0/32px 4px no-repeat,
-              repeating-linear-gradient(90deg, rgba(255,196,0,.85) 0 6px, transparent 6px 16px) 0 100%/32px 4px no-repeat,
-              linear-gradient(180deg, #2a3556, #1b2440);
-  background-color: #222c4d;
-  animation: jr-bulbs .9s linear infinite;
-}
+.jr-art, .jr-glass { position: absolute; inset: 0; pointer-events: none }
+.jr-art { filter: drop-shadow(0 30px 60px rgba(0,0,0,.75)) }
+.jr-bulb { animation: jr-bulbs .9s steps(2) infinite }
+/* Live reels, sitting in the artwork's windows. */
 .jr-reels {
-  position: relative; display: flex; gap: 10px; justify-content: center;
-  margin: 22px 34px 18px; padding: 14px; border-radius: 16px;
-  background: #05080f; box-shadow: inset 0 6px 18px rgba(0,0,0,.8);
+  position: absolute; left: ${WINDOW_X}px; top: ${WINDOW_Y}px;
+  display: flex; gap: ${WINDOW_GAP}px;
 }
 .jr-window {
-  width: ${REEL_ITEM}px; height: ${REEL_ITEM}px; overflow: hidden; border-radius: 12px;
-  background: linear-gradient(180deg, #101828, #060a14);
-  box-shadow: inset 0 0 0 2px rgba(255,196,0,.35);
+  width: ${REEL_ITEM}px; height: ${REEL_ITEM}px; overflow: hidden; border-radius: 3px;
+  background: linear-gradient(180deg, #8d8378 0%, #fffdf6 24%, #fff 50%, #f4ece0 76%, #8d8378 100%);
+  box-shadow: inset 0 0 14px rgba(70,45,15,.5), inset 0 0 0 1px rgba(0,0,0,.4);
 }
 .jr-reel { display: block; will-change: transform, filter }
 .jr-reel img {
   width: ${REEL_ITEM}px; height: ${REEL_ITEM}px; display: block; object-fit: cover;
+  -webkit-mask: radial-gradient(circle at 50% 50%, #000 60%, transparent 74%);
+  mask: radial-gradient(circle at 50% 50%, #000 60%, transparent 74%);
 }
 .jr-payline {
-  position: absolute; left: 20px; right: 20px; top: 50%; height: 2px;
-  background: #ffc400; opacity: .18; pointer-events: none;
+  position: absolute; left: -4px; right: -4px; top: 50%; height: 2px;
+  background: linear-gradient(90deg, transparent, #ff3b3b 12%, #ff3b3b 88%, transparent);
+  opacity: .45; pointer-events: none;
 }
 .jr-payline.is-hit { opacity: 1; animation: jr-payline-hit .5s ease-in-out 3 }
+/* Neon name panel. */
 .jr-plate {
-  min-height: 28px; margin: 0 34px; padding: 5px 12px; border-radius: 10px;
-  text-align: center; color: #ffdf6e; font-weight: 700; font-size: 17px;
-  background: rgba(255,196,0,.08); box-shadow: inset 0 0 0 1px rgba(255,196,0,.25);
+  position: absolute; left: ${WINDOW_X}px; top: ${PANEL_Y}px;
+  width: ${CAB_W - 2 * WINDOW_X}px; height: ${PANEL_H}px;
+  display: flex; align-items: center; justify-content: center; padding: 0 10px;
+  font: 700 24px/1.15 Georgia, "Times New Roman", serif; text-align: center;
+  letter-spacing: .04em; color: #ffd85e;
+  text-shadow: 0 0 6px #ff9d00, 0 0 18px rgba(255,157,0,.7);
 }
-.jr-hint { margin-top: 12px; text-align: center; color: #8fa0c4; font-size: 12px }
-.jr-lever { position: absolute; top: 96px; right: -30px; width: 26px; text-align: center }
+/* LED credit strip. */
+.jr-led {
+  position: absolute; left: 96px; top: ${LED_Y}px; width: 188px; height: ${LED_H}px;
+  display: flex; align-items: center; justify-content: center;
+  font: 700 11px/1 "Courier New", monospace; letter-spacing: .28em;
+  color: #ff6b5e; text-shadow: 0 0 8px #ff2d1a;
+}
+/* The arm hangs off the right edge, level with the reel deck. */
+.jr-lever { position: absolute; top: 190px; right: -44px; width: 34px; text-align: center }
+.jr-lever::before {
+  content: ""; position: absolute; bottom: -13px; left: 50%; translate: -50% 0;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%, #fbfcfd, #9aa2ae 58%, #4a515b);
+  box-shadow: 0 3px 8px rgba(0,0,0,.55);
+}
 .jr-rail {
-  display: block; width: 8px; height: ${MAX_TRAVEL}px; margin: 0 auto;
-  border-radius: 4px; background: linear-gradient(180deg, #8993a4, #3b455c);
+  display: block; width: 10px; height: ${MAX_TRAVEL}px; margin: 0 auto;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #4a515b 0 16%, #f6f8fa 42%, #aeb6c1 62%, #444b55 100%);
+  box-shadow: 0 2px 6px rgba(0,0,0,.5);
 }
+/* translate + rotate as individual properties, never \`transform\`: \`rotate\`
+   composes first, so a transform-based offset would be swung around with it. */
 .jr-knob {
-  position: absolute; top: -14px; left: 50%; width: 26px; height: 26px; padding: 0;
+  position: absolute; top: -24px; left: 50%; width: 36px; height: 36px; padding: 0;
   border: none; border-radius: 50%; cursor: grab; touch-action: none;
-  background: radial-gradient(circle at 34% 30%, #ff8b7a, #d93f2b 70%);
-  box-shadow: 0 4px 12px rgba(0,0,0,.5);
-  transform: translate(-50%, var(--travel, 0px));
+  background: radial-gradient(circle at 34% 28%, #ff9e8d 0 12%, #e01f1f 55%, #7d0f0f 100%);
+  box-shadow: 0 6px 16px rgba(0,0,0,.6), inset 0 -4px 8px rgba(0,0,0,.4);
+  translate: -50% var(--travel, 0px);
 }
+/* Only way out besides Esc: the overlay never dismisses itself. */
+.jr-close {
+  position: fixed; top: 20px; right: 24px; width: 40px; height: 40px; padding: 0;
+  border: 2px solid #c0c7d1; border-radius: 50%; cursor: pointer;
+  font: 700 17px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f2f5f8; background: rgba(12,14,18,.72);
+  box-shadow: 0 4px 12px rgba(0,0,0,.5);
+}
+.jr-close:hover { color: #fff; background: #c1121f; border-color: #ffd85e }
+.jr-close:focus-visible { outline: 3px solid #ffd85e; outline-offset: 3px }
 .jr-knob:active { cursor: grabbing }
-.jr-knob:focus-visible { outline: 3px solid #ffc400; outline-offset: 3px }
+.jr-knob:focus-visible { outline: 3px solid #ffd166; outline-offset: 3px }
 .jr-knob:disabled { cursor: default }
 @media (prefers-reduced-motion: reduce) {
   .jr-machine { backdrop-filter: none }
-  .jr-cab { animation: none }
-  .jr-marquee { animation: none }
+  .jr-cab, .jr-bulb { animation: none }
   .jr-payline.is-hit { animation: none }
 }
 `;
@@ -139,8 +176,7 @@ export function runMachine(
   root.setAttribute("aria-label", "Assignee raffle");
 
   const cab = el("div", "jr-cab");
-  const marquee = el("div", "jr-marquee");
-  marquee.textContent = "☀ RAFFLE ☀";
+  cab.innerHTML = CABINET_SVG; // static artwork, no interpolation
 
   const reels = el("div", "jr-reels");
   const strips = Array.from({ length: REELS }, () => {
@@ -157,9 +193,15 @@ export function runMachine(
 
   const plate = el("div", "jr-plate");
   plate.setAttribute("role", "status");
+  plate.textContent = "— READY —"; // the panel is always lit; the name replaces it
 
-  const hint = el("div", "jr-hint");
-  hint.textContent = "Pull the lever";
+  const hint = el("div", "jr-led");
+  hint.textContent = "PULL THE LEVER";
+
+  const closeButton = el("button", "jr-close");
+  closeButton.type = "button";
+  closeButton.textContent = "✕";
+  closeButton.setAttribute("aria-label", "Close the raffle machine");
 
   const leverBox = el("div", "jr-lever");
   const knob = el("button", "jr-knob");
@@ -167,8 +209,11 @@ export function runMachine(
   knob.setAttribute("aria-label", "Pull the lever to draw an assignee");
   leverBox.append(el("span", "jr-rail"), knob);
 
-  cab.append(marquee, reels, plate, hint, leverBox);
-  root.append(cab);
+  const glass = el("div", "");
+  glass.innerHTML = GLASS_SVG;
+
+  cab.append(reels, glass.firstElementChild!, plate, hint, leverBox);
+  root.append(cab, closeButton); // screen corner, not bolted to the cabinet
   document.body.append(root);
   knob.focus();
   drumroll(); // anticipation while the lever sits there, untouched
@@ -186,9 +231,9 @@ export function runMachine(
     if (event.key === "Escape") close();
   }
   document.addEventListener("keydown", onKey);
-  root.addEventListener("click", (event) => {
-    if (event.target === root) close(); // backdrop only
-  });
+  // pointerdown, not click: the cabinet opens under the cursor mid-click, so the
+  // opening click's mouseup would otherwise land on the backdrop and dismiss it.
+  closeButton.addEventListener("click", close);
 
   /** Decaying tick chain: the gaps grow as the reels lose speed. */
   const ticks = (total: number) => {
@@ -238,7 +283,7 @@ export function runMachine(
     if (pulled) return;
     pulled = true;
     knob.disabled = true;
-    hint.textContent = "Spinning…";
+    hint.textContent = "SPINNING…";
     lever();
 
     const pick = await draw();
@@ -254,8 +299,8 @@ export function runMachine(
 
     winner = pick;
     line.classList.add("is-hit");
-    plate.textContent = `🎉 ${pick.name || "Someone"}`;
-    hint.textContent = "";
+    plate.textContent = pick.name || "Someone";
+    hint.textContent = "CLOSE WHEN READY";
     payline();
     chime();
     if (!calm) {
@@ -263,7 +308,7 @@ export function runMachine(
       shockwave(innerWidth / 2, innerHeight / 2);
       shake();
     }
-    setTimeout(close, CLOSE_AFTER_WIN_MS);
+    closeButton.focus(); // the lever is spent; the exit is the only control left
   }
 
   // Drag physics: grab the knob, haul it down, release past the latch point.
@@ -291,7 +336,7 @@ export function runMachine(
       return;
     }
     // Short of the latch: spring back and let them try again.
-    knob.style.transition = "transform .32s cubic-bezier(.2,1.8,.3,1), rotate .32s ease-out";
+    knob.style.transition = "translate .32s cubic-bezier(.2,1.8,.3,1), rotate .32s ease-out";
     setTravel(0);
     setTimeout(() => (knob.style.transition = ""), 340);
   });
