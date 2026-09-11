@@ -15,7 +15,7 @@ gold, confetti bursts, the page shakes and a winner banner slides in. A gold arc
 around the button tracks how much of the round is used up.
 
 The reel animates to a single precomputed offset (Web Animations API), so it always
-stops exactly on the assignee that was already picked — the animation never decides
+stops exactly on the assignee that was already picked. The animation never decides
 the winner. Celebration overlays are appended to `document.body`, not to the Vue
 container, so they survive Jira rebuilding the filter row mid-spin.
 
@@ -27,7 +27,7 @@ Everything above collapses to a plain, instant button under
 
 The toolbar popup lists the rounds in progress per board, resets them all with one
 button, and toggles sound. Settings live in `chrome.storage.local` and the content
-script picks them up through `storage.onChanged` — no reload needed.
+script picks them up through `storage.onChanged`, no reload needed.
 
 ## Develop
 

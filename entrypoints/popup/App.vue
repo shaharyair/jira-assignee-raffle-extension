@@ -53,7 +53,7 @@ onMounted(load);
           <span class="rounds__count">{{ round.drawn }} drawn</span>
         </li>
       </ul>
-      <p v-else class="empty">No draws yet — open a Jira board and hit the dice.</p>
+      <p v-else class="empty">No draws yet. Open a Jira board and hit the dice.</p>
     </section>
 
     <button class="action" :class="{ 'action--done': cleared }" type="button" @click="resetRounds">
