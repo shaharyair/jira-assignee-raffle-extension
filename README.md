@@ -1,27 +1,35 @@
 # Jira Assignee Raffle
 
-Adds a raffle button to the assignee filter row of a Jira board. Each click picks a
-random assignee and filters the board to them. Nobody is drawn twice until everyone
-has had a turn, then a new round starts.
+Adds a raffle button to the assignee filter row of a Jira board. Clicking it opens a
+full-screen slot machine; pulling its lever picks a random assignee and filters the
+board to them. Nobody is drawn twice until everyone has had a turn, then a new round
+starts.
 
 Draw state is stored per board in `chrome.storage.local`, so two boards keep
 independent rounds and a reload does not restart one.
 
 ## The draw
 
-Clicking the dice runs a slot machine: the button grows, avatars blur past it and
-decelerate onto the winner while the filter is being applied, then the ring flashes
-gold, confetti bursts, the page shakes and a winner banner slides in. A gold arc
-around the button tracks how much of the round is used up.
+Clicking the dice opens the cabinet over the page: three reels, a marquee and a
+lever you drag down (or hit Enter on). Release past 60% of the lever's travel and it
+latches; anything shorter springs back. The reels stop left to right 300ms apart,
+and roughly a third of the time the last one hangs a frame short before creeping the
+winner in. Then the payline lights, the plate names the winner, confetti bursts and
+the page shakes. A gold arc around the button tracks how much of the round is used
+up, and the button keeps the winner's avatar in a gold ring with a dice badge.
 
-The reel animates to a single precomputed offset (Web Animations API), so it always
-stops exactly on the assignee that was already picked. The animation never decides
-the winner. Celebration overlays are appended to `document.body`, not to the Vue
-container, so they survive Jira rebuilding the filter row mid-spin.
+**Nothing is drawn until the lever is pulled.** Opening the cabinet and dismissing it
+(Esc or a backdrop click) leaves storage untouched, so nobody's turn is burned by a
+change of mind. Each reel animates to a single precomputed offset (Web Animations
+API) that always ends on the already-picked assignee, near-miss included: the
+animation never decides the winner. The cabinet and the celebration overlays are
+appended to `document.body`, not to the Vue container, so they survive Jira
+rebuilding the filter row mid-spin.
 
 Sounds are synthesized with WebAudio (no audio files) and are **off by default**.
-Everything above collapses to a plain, instant button under
-`prefers-reduced-motion: reduce`.
+Under `prefers-reduced-motion: reduce` the cabinet still opens (it is the
+interaction, not decoration) but the reels snap instead of spinning, with no blur,
+near-miss, confetti or shake.
 
 ## Popup
 
@@ -35,7 +43,7 @@ script picks them up through `storage.onChanged`, no reload needed.
 npm install
 npm run dev      # loads a dev browser with the extension
 npm run compile  # type check
-npm test         # raffle + reel logic
+npm test         # raffle + reel maths
 npm run build    # -> .output/chrome-mv3
 ```
 
