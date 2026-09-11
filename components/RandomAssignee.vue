@@ -1,15 +1,12 @@
 <script setup lang="ts">
-import { getAssignees, getBoardKey, selectAssignee, type Assignee } from "../utils/jira";
+import { closeMenu, getAssignees, getBoardKey, selectAssignee, type Assignee } from "../utils/jira";
+import { runMachine } from "../utils/machine";
 import { pickNext } from "../utils/raffle";
-import { REEL_ITEM, reelStrip } from "../utils/reel";
-import { chime, drumroll, tick } from "../utils/sound";
-import { confetti, shake, shockwave, winnerToast } from "../utils/effects";
 
 // Module scope, so a remount mid-draw (Jira rebuilds the filter row on every
-// toggle) can't start a second raffle and burn two people on one click.
+// toggle) can't open a second cabinet and burn two people on one click.
 let drawing = false;
 
-const SPIN_MS = 1600;
 const IDLE_MS = 30_000;
 
 const storageKey = `raffle:${getBoardKey()}`;
@@ -18,12 +15,8 @@ const loading = ref(false);
 const landed = ref(false);
 const impatient = ref(false);
 const tilt = ref(0);
-const strip = ref<string[]>([]);
 const seenCount = ref(0);
 const total = ref(0);
-
-const root = ref<HTMLElement>();
-const reel = ref<HTMLElement>();
 
 const calm = matchMedia("(prefers-reduced-motion: reduce)");
 /** Conic ring showing how much of the round is used up. */
@@ -51,85 +44,51 @@ const readSeen = async (): Promise<string[]> => {
   return (stored[storageKey] as string[] | undefined) ?? [];
 };
 
-/** Spin the reel to a precomputed offset so it stops exactly on the winner. */
-async function spin(assignees: Assignee[], winner: Assignee) {
-  const avatars = assignees.map((a) => a.avatar).filter(Boolean);
-  if (calm.matches || !winner.avatar || !avatars.length) return;
-
-  strip.value = reelStrip(avatars, winner.avatar);
-  await nextTick();
-  const el = reel.value;
-  if (!el) return;
-
-  const distance = (strip.value.length - 1) * REEL_ITEM;
-  const spinning = el.animate(
-    [
-      { transform: "translateY(0)", filter: "blur(5px)" },
-      { transform: `translateY(-${distance * 0.85}px)`, filter: "blur(3px)", offset: 0.6 },
-      { transform: `translateY(-${distance}px)`, filter: "blur(0)" },
-    ],
-    { duration: SPIN_MS, easing: "cubic-bezier(.15,.9,.25,1)", fill: "forwards" },
-  );
-
-  // Ticks slow down with the reel: the interval grows as the easing decays.
-  let gap = 45;
-  let elapsed = 0;
-  const step = () => {
-    if (elapsed > SPIN_MS - 100) return;
-    tick();
-    elapsed += gap;
-    gap *= 1.07;
-    setTimeout(step, gap);
-  };
-  step();
-
-  await spinning.finished.catch(() => {}); // container removed mid-spin: no drama
-}
-
-function celebrate(winner: Assignee) {
-  landed.value = true;
-  setTimeout(() => (landed.value = false), 900);
-  chime();
-  winnerToast(winner.name || "Someone", winner.avatar);
-  if (calm.matches) return;
-  const box = root.value?.getBoundingClientRect();
-  if (box) {
-    confetti(box.left + box.width / 2, box.top + box.height / 2);
-    shockwave(box.left + box.width / 2, box.top + box.height / 2);
-  }
-  shake();
-}
-
 const onClick = async () => {
   if (drawing) return;
   drawing = true;
   loading.value = true;
   resetIdle();
-  drumroll();
   try {
     const assignees = await getAssignees();
-    const { id, seen } = pickNext(
-      assignees.map((a) => a.id),
-      await readSeen(),
-    );
-    if (!id) {
+    if (!assignees.length) {
       console.warn("[jira-raffle] no assignees on this board");
       return;
     }
-    await browser.storage.local.set({ [storageKey]: seen });
-    total.value = assignees.length;
-    seenCount.value = seen.length;
 
-    const winner = assignees.find((a) => a.id === id) ?? null;
-    // Apply the filter and spin at the same time: the reel covers the wait
-    // while Jira works through its re-renders.
-    const applying = selectAssignee(id);
-    if (winner) await spin(assignees, winner);
-    await applying;
+    /**
+     * Runs on the lever pull and nowhere else: opening the cabinet and closing
+     * it again must not consume anyone's turn.
+     */
+    const draw = async () => {
+      const { id, seen } = pickNext(
+        assignees.map((a) => a.id),
+        await readSeen(),
+      );
+      if (!id) return null;
+      await browser.storage.local.set({ [storageKey]: seen });
+      total.value = assignees.length;
+      seenCount.value = seen.length;
+
+      // Filter the board under the spin, so the reels cover Jira's re-renders.
+      void selectAssignee(id);
+      return assignees.find((a) => a.id === id) ?? null;
+    };
+
+    const winner = await runMachine(
+      assignees.map((a) => a.avatar).filter(Boolean),
+      draw,
+    );
+    // Dismissed before the pull: only selectAssignee tidies up after itself, so
+    // the overflow menu getAssignees opened is still hanging open.
+    if (!winner) {
+      await closeMenu();
+      return;
+    }
 
     picked.value = winner;
-    strip.value = [];
-    if (winner) celebrate(winner);
+    landed.value = true;
+    setTimeout(() => (landed.value = false), 900);
   } finally {
     drawing = false;
     loading.value = false;
@@ -139,7 +98,6 @@ const onClick = async () => {
 
 <template>
   <div
-    ref="root"
     class="raffle-slot"
     :style="{ '--progress': `${progress}deg`, '--tilt': `${tilt}deg` }"
     :class="{ 'is-live': total > 0 }"
@@ -160,12 +118,7 @@ const onClick = async () => {
       @mousemove="onMove"
       @mouseleave="tilt = 0"
     >
-      <span v-if="strip.length" class="raffle__window" aria-hidden="true">
-        <span ref="reel" class="raffle__reel">
-          <img v-for="(src, i) in strip" :key="i" class="raffle__frame" :src="src" alt="" />
-        </span>
-      </span>
-      <img v-else-if="picked?.avatar" class="raffle__avatar" :src="picked.avatar" alt="" />
+      <img v-if="picked?.avatar" class="raffle__avatar" :src="picked.avatar" alt="" />
       <!-- Inline SVG, not an emoji: emoji glyph metrics differ per platform and
            will not sit centred in a 24px circle. -->
       <svg v-else class="raffle__icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -174,8 +127,16 @@ const onClick = async () => {
         <circle cx="15.5" cy="15.5" r="1.6" fill="currentColor" />
         <circle cx="12" cy="12" r="1.6" fill="currentColor" />
       </svg>
-      <span v-if="loading && !strip.length" class="raffle__spinner" aria-hidden="true" />
+      <span v-if="loading" class="raffle__spinner" aria-hidden="true" />
     </button>
+    <!-- Marks the avatar as a raffle result, not a stray assignee chip. -->
+    <svg v-if="picked" class="raffle__badge" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="1" y="1" width="22" height="22" rx="6" fill="var(--ds-surface, #fff)" />
+      <rect x="3" y="3" width="18" height="18" rx="5" fill="var(--ds-border-brand, #0c66e4)" />
+      <circle cx="8.5" cy="8.5" r="2.2" fill="#fff" />
+      <circle cx="15.5" cy="15.5" r="2.2" fill="#fff" />
+      <circle cx="12" cy="12" r="2.2" fill="#fff" />
+    </svg>
   </div>
 </template>
 
@@ -191,7 +152,8 @@ const onClick = async () => {
 .raffle-slot.is-live::before {
   content: "";
   position: absolute;
-  inset: -4px;
+  /* Clears the winner ring below, which already occupies -4px. */
+  inset: -8px;
   border-radius: 50%;
   background: conic-gradient(#ffc400 var(--progress), transparent 0);
   -webkit-mask: radial-gradient(circle, transparent 68%, #000 70%);
@@ -229,21 +191,26 @@ const onClick = async () => {
 .raffle:disabled {
   cursor: progress;
 }
-/* A pick is a result, not an empty slot: drop the dashed placeholder look. */
+/* A winner reads like a selected assignee in Jira's own language: white gap,
+   brand-blue ring. The dice badge is what marks it as the raffle's pick, so the
+   avatar does not need a colour that fights the rest of the filter row. */
 .raffle.has-pick {
-  border-style: solid;
-  border-color: var(--ds-border-brand, #0c66e4);
+  border: none;
+  padding: 0;
+  background: var(--ds-surface, #fff);
+  box-shadow: 0 0 0 2px var(--ds-surface, #fff), 0 0 0 4px var(--ds-border-brand, #0c66e4);
   animation: none;
+}
+.raffle.has-pick:hover {
+  box-shadow: 0 0 0 2px var(--ds-surface, #fff), 0 0 0 4px var(--ds-border-brand, #0c66e4),
+    0 0 12px rgba(12, 102, 228, 0.45);
 }
 .raffle.is-spinning {
-  transform: scale(1.5);
   border-style: solid;
   border-color: var(--ds-border-brand, #0c66e4);
   animation: none;
-  z-index: 2;
 }
 .raffle.is-landed {
-  border-color: #ffc400;
   animation: raffle-land 0.9s cubic-bezier(0.2, 1.6, 0.3, 1);
 }
 .raffle.is-impatient {
@@ -255,29 +222,21 @@ const onClick = async () => {
   display: block;
   flex: none;
 }
-.raffle__avatar,
-.raffle__frame {
-  width: 24px;
-  height: 24px;
+.raffle__avatar {
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
   display: block;
 }
-/* Sits over the border box, not inside it: the content box is 4px narrower than
-   a reel frame, which would squeeze and clip the avatars mid-spin. */
-.raffle__window {
+.raffle__badge {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 24px;
-  height: 24px;
-  overflow: hidden;
-  border-radius: 50%;
-}
-.raffle__reel {
-  display: block;
-  will-change: transform, filter;
+  right: -6px;
+  bottom: -6px;
+  width: 13px;
+  height: 13px;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(9, 30, 66, 0.35));
 }
 .raffle__spinner {
   position: absolute;
@@ -299,7 +258,7 @@ const onClick = async () => {
 }
 @keyframes raffle-land {
   0% {
-    transform: scale(1.5);
+    transform: scale(1);
   }
   45% {
     transform: scale(1.35);
@@ -330,9 +289,6 @@ const onClick = async () => {
   .raffle.is-impatient {
     animation: none;
     transition: opacity 0.15s ease;
-  }
-  .raffle.is-spinning {
-    transform: none;
   }
 }
 </style>
