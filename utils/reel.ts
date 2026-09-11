@@ -33,24 +33,22 @@ export const spinMs = (index: number, nearMiss = false) =>
  * near-miss tease is cosmetic: it can never land on anyone but the winner.
  */
 export function reelFrames(distance: number, nearMiss: boolean, duration: number): Keyframe[] {
+  /**
+   * ONE deceleration curve for the whole travel. Splitting it across two eased
+   * segments makes the reel slow down, speed back up and stop again, which
+   * reads as a jump right at the landing.
+   */
   const spin: Keyframe = {
     transform: "translateY(0)",
     filter: "blur(6px)",
-    easing: "cubic-bezier(.15,.9,.25,1)",
+    easing: "cubic-bezier(.12,.72,.1,1)",
   };
   const land: Keyframe = { transform: `translateY(-${distance}px)`, filter: "blur(0)" };
 
   if (!nearMiss) {
-    return [
-      spin,
-      {
-        transform: `translateY(-${distance * 0.85}px)`,
-        filter: "blur(3px)",
-        offset: 0.6,
-        easing: "cubic-bezier(.2,.8,.2,1)",
-      },
-      land,
-    ];
+    // Blur-only midpoint: it carries no transform, so the travel stays a single
+    // uninterrupted segment under the curve above.
+    return [spin, { filter: "blur(2px)", offset: 0.55 }, land];
   }
 
   // Stop one frame short, hold, then creep the winner into the window.
