@@ -1,8 +1,15 @@
-/** Pure slot-reel strip: filler frames ending on the winner. */
+/** Pure slot-reel maths: strips, spin timing and keyframes. */
 
-/** Height of one reel frame in px; must match the button size in the component. */
-export const REEL_ITEM = 24;
+/** Height of one reel frame in px; must match `.jr-window` in machine.ts. */
+export const REEL_ITEM = 96;
 const REEL_LENGTH = 24;
+
+/** First reel's spin, in ms. Later reels stop `REEL_STAGGER` apart. */
+export const SPIN_MS = 1600;
+export const REEL_STAGGER = 300;
+/** Near-miss tease: hold one frame short, then creep the winner in. */
+const HOLD_MS = 200;
+const CREEP_MS = 380;
 
 /**
  * A strip of `length` avatars whose LAST frame is the winner, so the reel can
@@ -15,4 +22,52 @@ export function reelStrip(avatars: string[], winner: string, length = REEL_LENGT
     () => avatars[Math.floor(Math.random() * avatars.length)]!,
   );
   return [...filler, winner];
+}
+
+/** How long reel `index` runs; a near-miss reel takes the tease on top. */
+export const spinMs = (index: number, nearMiss = false) =>
+  SPIN_MS + index * REEL_STAGGER + (nearMiss ? HOLD_MS + CREEP_MS : 0);
+
+/**
+ * Keyframes for one reel. The last frame is always `-distance`, so the
+ * near-miss tease is cosmetic: it can never land on anyone but the winner.
+ */
+export function reelFrames(distance: number, nearMiss: boolean, duration: number): Keyframe[] {
+  const spin: Keyframe = {
+    transform: "translateY(0)",
+    filter: "blur(6px)",
+    easing: "cubic-bezier(.15,.9,.25,1)",
+  };
+  const land: Keyframe = { transform: `translateY(-${distance}px)`, filter: "blur(0)" };
+
+  if (!nearMiss) {
+    return [
+      spin,
+      {
+        transform: `translateY(-${distance * 0.85}px)`,
+        filter: "blur(3px)",
+        offset: 0.6,
+        easing: "cubic-bezier(.2,.8,.2,1)",
+      },
+      land,
+    ];
+  }
+
+  // Stop one frame short, hold, then creep the winner into the window.
+  const stopsShort = (duration - HOLD_MS - CREEP_MS) / duration;
+  return [
+    spin,
+    {
+      transform: `translateY(-${distance - REEL_ITEM}px)`,
+      filter: "blur(0)",
+      offset: stopsShort,
+      easing: "linear",
+    },
+    {
+      transform: `translateY(-${distance - REEL_ITEM}px)`,
+      offset: (duration - CREEP_MS) / duration,
+      easing: "ease-out",
+    },
+    land,
+  ];
 }
