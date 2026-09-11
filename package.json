@@ -1,8 +1,8 @@
 {
-  "name": "wxt-vue-starter",
-  "description": "manifest.json description",
+  "name": "jira-assignee-raffle-extension",
+  "description": "Randomly picks an assignee on a Jira board and applies them as a filter.",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -12,22 +12,20 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "vue-tsc --noEmit",
+    "test": "node --test utils/raffle.test.ts",
     "postinstall": "wxt prepare"
   },
   "dependencies": {
-    "@primevue/themes": "^4.0.7",
-    "@vueuse/core": "^11.2.0",
-    "primeicons": "^7.0.0",
-    "primevue": "^4.0.7",
-    "vue": "^3.4.34"
+    "vue": "^3.5.42"
   },
   "devDependencies": {
-    "@wxt-dev/module-vue": "^1.0.0",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.47",
-    "tailwindcss": "^3.4.12",
-    "typescript": "^5.5.4",
-    "vue-tsc": "^2.0.29",
-    "wxt": "^0.19.1"
+    "@types/node": "^22.20.2",
+    "@wxt-dev/module-vue": "^1.0.3",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.18",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.3.11",
+    "wxt": "^0.21.4"
   }
 }
