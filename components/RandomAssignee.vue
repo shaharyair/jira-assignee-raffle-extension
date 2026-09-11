@@ -131,10 +131,11 @@ const onClick = async () => {
     </button>
     <!-- Marks the avatar as a raffle result, not a stray assignee chip. -->
     <svg v-if="picked" class="raffle__badge" viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#172b4d" />
-      <circle cx="8.5" cy="8.5" r="2" fill="#ffc400" />
-      <circle cx="15.5" cy="15.5" r="2" fill="#ffc400" />
-      <circle cx="12" cy="12" r="2" fill="#ffc400" />
+      <rect x="1" y="1" width="22" height="22" rx="6" fill="var(--ds-surface, #fff)" />
+      <rect x="3" y="3" width="18" height="18" rx="5" fill="var(--ds-border-brand, #0c66e4)" />
+      <circle cx="8.5" cy="8.5" r="2.2" fill="#fff" />
+      <circle cx="15.5" cy="15.5" r="2.2" fill="#fff" />
+      <circle cx="12" cy="12" r="2.2" fill="#fff" />
     </svg>
   </div>
 </template>
@@ -151,7 +152,8 @@ const onClick = async () => {
 .raffle-slot.is-live::before {
   content: "";
   position: absolute;
-  inset: -4px;
+  /* Clears the winner ring below, which already occupies -4px. */
+  inset: -8px;
   border-radius: 50%;
   background: conic-gradient(#ffc400 var(--progress), transparent 0);
   -webkit-mask: radial-gradient(circle, transparent 68%, #000 70%);
@@ -189,12 +191,19 @@ const onClick = async () => {
 .raffle:disabled {
   cursor: progress;
 }
-/* A winner is a prize, not an empty slot: gold ring instead of the placeholder. */
+/* A winner reads like a selected assignee in Jira's own language: white gap,
+   brand-blue ring. The dice badge is what marks it as the raffle's pick, so the
+   avatar does not need a colour that fights the rest of the filter row. */
 .raffle.has-pick {
   border: none;
-  background: conic-gradient(from 210deg, #ffc400, #ff8b00, #ffdf6e, #ffc400);
-  padding: 2px;
+  padding: 0;
+  background: var(--ds-surface, #fff);
+  box-shadow: 0 0 0 2px var(--ds-surface, #fff), 0 0 0 4px var(--ds-border-brand, #0c66e4);
   animation: none;
+}
+.raffle.has-pick:hover {
+  box-shadow: 0 0 0 2px var(--ds-surface, #fff), 0 0 0 4px var(--ds-border-brand, #0c66e4),
+    0 0 12px rgba(12, 102, 228, 0.45);
 }
 .raffle.is-spinning {
   border-style: solid;
@@ -222,12 +231,12 @@ const onClick = async () => {
 }
 .raffle__badge {
   position: absolute;
-  right: -3px;
-  bottom: -3px;
-  width: 10px;
-  height: 10px;
+  right: -6px;
+  bottom: -6px;
+  width: 13px;
+  height: 13px;
   pointer-events: none;
-  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 1px 2px rgba(9, 30, 66, 0.35));
 }
 .raffle__spinner {
   position: absolute;

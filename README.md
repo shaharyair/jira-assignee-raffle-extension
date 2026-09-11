@@ -23,7 +23,8 @@ the winner, confetti bursts and the cabinet jolts; roughly a third of winning sp
 hang the last reel a frame short first. The machine stays open either way, so you can
 keep pulling for the next assignee until you close it. A gold arc around the button
 tracks how much of the round is used up, and the button keeps the winner's avatar in
-a gold ring with a dice badge.
+Jira's own selected-avatar treatment (white gap, brand-blue ring) with a dice badge
+marking it as the raffle's pick. Gold is reserved for the round-progress arc.
 
 **Nothing is drawn until a pull actually lands.** Opening the cabinet, missing, or
 closing it again all leave storage untouched, so nobody's turn is burned by a change
