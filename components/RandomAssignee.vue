@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getAssignees, getBoardKey, selectAssignee, type Assignee } from "../utils/jira";
+import { closeMenu, getAssignees, getBoardKey, selectAssignee, type Assignee } from "../utils/jira";
 import { runMachine } from "../utils/machine";
 import { pickNext } from "../utils/raffle";
 
@@ -79,7 +79,12 @@ const onClick = async () => {
       assignees.map((a) => a.avatar).filter(Boolean),
       draw,
     );
-    if (!winner) return; // dismissed before the pull
+    // Dismissed before the pull: only selectAssignee tidies up after itself, so
+    // the overflow menu getAssignees opened is still hanging open.
+    if (!winner) {
+      await closeMenu();
+      return;
+    }
 
     picked.value = winner;
     landed.value = true;
