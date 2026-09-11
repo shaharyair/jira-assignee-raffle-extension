@@ -100,6 +100,7 @@ export function shake() {
 
 export function winnerToast(name: string, avatar: string) {
   const el = spawn("jr-toast", {}, 3400);
+  el.setAttribute("role", "status");
   const img = document.createElement("img");
   img.src = avatar;
   img.alt = "";

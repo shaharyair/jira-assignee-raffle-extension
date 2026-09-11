@@ -43,7 +43,7 @@ const onMove = (event: MouseEvent) => {
   resetIdle();
   if (calm.matches) return;
   const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
-  tilt.value = ((event.clientX - (box.left + box.width / 2)) / box.width) * 20;
+  tilt.value = ((event.clientX - (box.left + box.width / 2)) / box.width) * 10;
 };
 
 const readSeen = async (): Promise<string[]> => {
@@ -148,7 +148,12 @@ const onClick = async () => {
       class="raffle"
       type="button"
       :disabled="loading"
-      :class="{ 'is-spinning': loading, 'is-landed': landed, 'is-impatient': impatient }"
+      :class="{
+        'is-spinning': loading,
+        'is-landed': landed,
+        'is-impatient': impatient,
+        'has-pick': !!picked,
+      }"
       :title="picked ? `Raffle picked ${picked.name}` : 'Pick a random assignee'"
       :aria-label="picked ? `Raffle picked ${picked.name}. Pick again` : 'Pick a random assignee'"
       @click="onClick"
@@ -161,7 +166,14 @@ const onClick = async () => {
         </span>
       </span>
       <img v-else-if="picked?.avatar" class="raffle__avatar" :src="picked.avatar" alt="" />
-      <span v-else class="raffle__icon" aria-hidden="true">🎲</span>
+      <!-- Inline SVG, not an emoji: emoji glyph metrics differ per platform and
+           will not sit centred in a 24px circle. -->
+      <svg v-else class="raffle__icon" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="2" />
+        <circle cx="8.5" cy="8.5" r="1.6" fill="currentColor" />
+        <circle cx="15.5" cy="15.5" r="1.6" fill="currentColor" />
+        <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+      </svg>
       <span v-if="loading && !strip.length" class="raffle__spinner" aria-hidden="true" />
     </button>
   </div>
@@ -172,46 +184,59 @@ const onClick = async () => {
   position: relative;
   display: flex;
   align-items: center;
+  /* Only place that owns spacing from the avatar row. */
+  margin-left: 4px;
 }
 /* Round progress: how many people are already drawn. */
 .raffle-slot.is-live::before {
   content: "";
   position: absolute;
-  inset: 6px -2px 6px 6px;
+  inset: -4px;
   border-radius: 50%;
   background: conic-gradient(#ffc400 var(--progress), transparent 0);
-  -webkit-mask: radial-gradient(circle, transparent 62%, #000 64%);
-  mask: radial-gradient(circle, transparent 62%, #000 64%);
+  -webkit-mask: radial-gradient(circle, transparent 68%, #000 70%);
+  mask: radial-gradient(circle, transparent 68%, #000 70%);
   pointer-events: none;
 }
 .raffle {
   position: relative;
   width: 24px;
   height: 24px;
-  margin-left: 8px;
   padding: 0;
   border: 2px dashed var(--ds-border, #8993a4);
   border-radius: 50%;
   background: var(--ds-surface, #fff);
+  color: var(--ds-text-subtle, #626f86);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  font-size: 12px;
-  line-height: 1;
   animation: raffle-breathe 3.4s ease-in-out infinite;
   transform: rotate(var(--tilt));
-  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease,
+    border-color 0.25s ease, color 0.25s ease;
 }
 .raffle:hover {
+  color: var(--ds-text-brand, #0c66e4);
+  border-color: var(--ds-border-brand, #0c66e4);
   box-shadow: 0 0 0 3px rgba(12, 102, 228, 0.25), 0 0 18px rgba(255, 196, 0, 0.6);
+}
+.raffle:focus-visible {
+  outline: 2px solid var(--ds-border-focused, #0c66e4);
+  outline-offset: 2px;
 }
 .raffle:disabled {
   cursor: progress;
 }
+/* A pick is a result, not an empty slot: drop the dashed placeholder look. */
+.raffle.has-pick {
+  border-style: solid;
+  border-color: var(--ds-border-brand, #0c66e4);
+  animation: none;
+}
 .raffle.is-spinning {
-  transform: scale(1.7);
+  transform: scale(1.5);
   border-style: solid;
   border-color: var(--ds-border-brand, #0c66e4);
   animation: none;
@@ -224,6 +249,12 @@ const onClick = async () => {
 .raffle.is-impatient {
   animation: raffle-wiggle 1.2s ease-in-out infinite;
 }
+.raffle__icon {
+  width: 14px;
+  height: 14px;
+  display: block;
+  flex: none;
+}
 .raffle__avatar,
 .raffle__frame {
   width: 24px;
@@ -232,7 +263,13 @@ const onClick = async () => {
   object-fit: cover;
   display: block;
 }
+/* Sits over the border box, not inside it: the content box is 4px narrower than
+   a reel frame, which would squeeze and clip the avatars mid-spin. */
 .raffle__window {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 24px;
   height: 24px;
   overflow: hidden;
@@ -262,7 +299,7 @@ const onClick = async () => {
 }
 @keyframes raffle-land {
   0% {
-    transform: scale(1.7);
+    transform: scale(1.5);
   }
   45% {
     transform: scale(1.35);
