@@ -4,8 +4,9 @@ import { defineConfig } from "wxt";
 export default defineConfig({
   modules: ["@wxt-dev/module-vue"],
   manifest: {
-    name: "Jira Avatars Randomizer",
-    version: "0.1.1",
-    permissions: ["storage", "activeTab", "scripting"],
+    name: "Jira Assignee Raffle",
+    description: "Picks a random assignee on a Jira board and applies them as a filter.",
+    version: "0.2.0",
+    permissions: ["storage"],
   },
 });
