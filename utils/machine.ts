@@ -26,6 +26,7 @@ import {
   WINDOW_Y,
 } from "./cabinet";
 import { REEL_ITEM, reelFrames, reelStrip, spinMs } from "./reel";
+import { isCalm, settings } from "./settings";
 import { chime, clunk, drumroll, dud, lever, payline, teeter, tick } from "./sound";
 
 const REELS = 3;
@@ -38,8 +39,6 @@ const LATCH_TRAVEL = MAX_TRAVEL * 0.6;
 const ARM_LEN = 104;
 const MAX_SWING_DEG = 152;
 const NEAR_MISS_CHANCE = 0.35;
-/** Even odds: half the pulls land mismatched and draw nobody. Needs 2+ faces. */
-const MISS_CHANCE = 0.5;
 /** Exit animation; the node is only removed once it has played out. */
 const EXIT_MS = 240;
 
@@ -237,7 +236,7 @@ export function runMachine(
   draw: () => Promise<Assignee | null>,
 ): Promise<Assignee | null> {
   ensureStyles();
-  const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const calm = isCalm();
   const pool = avatars.filter(Boolean);
 
   const root = el("div", "jr-machine");
@@ -299,9 +298,12 @@ export function runMachine(
   const closed = Promise.withResolvers<Assignee | null>();
 
   let closing = false;
+  /** Set on a win when auto-close is on; any move toward the lever cancels it. */
+  let closeTimer: ReturnType<typeof setTimeout> | undefined;
   const close = () => {
     if (closing) return; // Esc plus a click on the button must not double-resolve
     closing = true;
+    clearTimeout(closeTimer);
     document.removeEventListener("keydown", onKey);
     root.classList.add("is-closing");
     setTimeout(
@@ -370,6 +372,7 @@ export function runMachine(
 
   async function pull() {
     if (pulled) return;
+    clearTimeout(closeTimer);
     pulled = true;
     knob.disabled = true;
     hint.textContent = "SPINNING…";
@@ -378,7 +381,7 @@ export function runMachine(
     lever();
 
     // A miss is decided BEFORE the draw, so a losing pull costs nobody a turn.
-    if (pool.length > 1 && Math.random() < MISS_CHANCE) {
+    if (pool.length > 1 && Math.random() >= settings.winChance) {
       await spin(missTargets());
       if (!root.isConnected) return;
       hint.textContent = "NO MATCH \u2014 PULL AGAIN";
@@ -401,7 +404,7 @@ export function runMachine(
     winner = pick;
     line.classList.add("is-hit");
     plate.textContent = pick.name || "Someone";
-    hint.textContent = "PULL AGAIN OR CLOSE";
+    hint.textContent = settings.autoClose ? "PULL AGAIN TO STAY" : "PULL AGAIN OR CLOSE";
     payline();
     chime();
     if (!calm) {
@@ -412,6 +415,8 @@ export function runMachine(
     }
 
     rearm();
+    // Hand the board back so the winner can start talking; cancelled by a pull.
+    if (settings.autoClose) closeTimer = setTimeout(close, settings.autoClose);
   }
 
   /** Three faces that are not all the same, so the payline visibly misses. */
@@ -443,6 +448,8 @@ export function runMachine(
     leverBox.style.setProperty("--swing", `${(px / MAX_TRAVEL) * MAX_SWING_DEG}deg`);
   };
   knob.addEventListener("pointerdown", (event) => {
+    // Reaching for the lever means another pull is coming: do not close under them.
+    clearTimeout(closeTimer);
     if (pulled) return;
     startY = event.clientY;
     knob.setPointerCapture(event.pointerId);

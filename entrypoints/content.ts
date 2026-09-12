@@ -1,5 +1,5 @@
 import RandomAssignee from "../components/RandomAssignee.vue";
-import { getFilterBar } from "../utils/jira";
+import { getFilterRow } from "../utils/jira";
 
 const MOUNTED_ATTR = "data-jira-raffle";
 
@@ -7,7 +7,7 @@ export default defineContentScript({
   matches: ["*://*.atlassian.net/jira/software/*"],
   main(ctx) {
     const mount = () => {
-      const anchor = getFilterBar();
+      const anchor = getFilterRow();
       if (!anchor || anchor.querySelector(`[${MOUNTED_ATTR}]`)) return;
 
       createIntegratedUi(ctx, {
