@@ -1,19 +1,13 @@
-/** Synthesized raffle sounds. No audio files, off unless enabled in the popup. */
-export const SOUND_KEY = "sound";
+/** Synthesized raffle sounds. No audio files; muted from the popup. */
+import { settings } from "./settings";
 
-let enabled = false;
 let ctx: AudioContext | null = null;
-
-browser.storage.local.get(SOUND_KEY).then((s) => (enabled = !!s[SOUND_KEY]));
-browser.storage.onChanged.addListener((changes) => {
-  if (changes[SOUND_KEY]) enabled = !!changes[SOUND_KEY].newValue;
-});
 
 /** Lazy: an AudioContext created before a user gesture starts suspended. */
 const audio = () => (ctx ??= new AudioContext());
 
 function beep(freq: number, seconds: number, type: OscillatorType, volume: number, delay = 0) {
-  if (!enabled) return;
+  if (!settings.sound) return;
   const ac = audio();
   const at = ac.currentTime + delay;
   const osc = ac.createOscillator();

@@ -1,69 +1,95 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { SOUND_KEY } from "../../utils/sound";
+import { AUTO_CLOSES, MOTIONS, settings, settingsReady, WIN_CHANCES } from "../../utils/settings";
 
-const BOARD_PREFIX = "raffle:";
+const ROUND_PREFIX = "raffle:";
 
-const sound = ref(false);
-const rounds = ref<{ key: string; board: string; drawn: number }[]>([]);
+const current = ref({ ...settings });
 const cleared = ref(false);
 
-const load = async () => {
-  const all = await browser.storage.local.get(null);
-  sound.value = !!all[SOUND_KEY];
-  rounds.value = Object.entries(all)
-    .filter(([key, value]) => key.startsWith(BOARD_PREFIX) && Array.isArray(value))
-    .map(([key, value]) => ({
-      key,
-      board: key.slice(BOARD_PREFIX.length).split("/").filter(Boolean).slice(-3).join(" / "),
-      drawn: (value as string[]).length,
-    }));
+onMounted(async () => {
+  await settingsReady;
+  current.value = { ...settings };
+});
+
+const set = async (patch: Partial<typeof settings>) => {
+  current.value = { ...current.value, ...patch };
+  await browser.storage.local.set(patch);
 };
 
-const toggleSound = async () => {
-  sound.value = !sound.value;
-  await browser.storage.local.set({ [SOUND_KEY]: sound.value });
-};
-
+/** Rounds and their banked talk times, every board at once. */
 const resetRounds = async () => {
-  await browser.storage.local.remove(rounds.value.map((r) => r.key));
+  const keys = Object.keys(await browser.storage.local.get(null)).filter((k) =>
+    k.startsWith(ROUND_PREFIX),
+  );
+  await browser.storage.local.remove(keys);
   cleared.value = true;
   setTimeout(() => (cleared.value = false), 1800);
-  await load();
 };
-
-onMounted(load);
 </script>
 
 <template>
   <main class="card">
-    <header class="hero">
-      <span class="hero__dice">🎲</span>
-      <div>
-        <h1>Assignee Raffle</h1>
-        <p>Everyone gets a turn before anyone repeats.</p>
-      </div>
-    </header>
+    <header class="hero"><span>🎲</span><h1>Assignee Raffle</h1></header>
 
-    <section class="panel">
-      <h2>Rounds in progress</h2>
-      <ul v-if="rounds.length" class="rounds">
-        <li v-for="round in rounds" :key="round.key">
-          <span class="rounds__board">{{ round.board }}</span>
-          <span class="rounds__count">{{ round.drawn }} drawn</span>
-        </li>
-      </ul>
-      <p v-else class="empty">No draws yet. Open a Jira board and hit the dice.</p>
+    <section>
+      <h2>Win chance</h2>
+      <div class="seg">
+        <button
+          v-for="option in WIN_CHANCES"
+          :key="option.value"
+          type="button"
+          :class="{ 'is-on': current.winChance === option.value }"
+          @click="set({ winChance: option.value })"
+        >
+          {{ option.label }}
+        </button>
+      </div>
     </section>
 
-    <button class="action" :class="{ 'action--done': cleared }" type="button" @click="resetRounds">
-      <span v-if="cleared">✓ Rounds reset</span>
-      <span v-else>Reset all rounds</span>
+    <section>
+      <h2>Auto-close after a win</h2>
+      <div class="seg">
+        <button
+          v-for="option in AUTO_CLOSES"
+          :key="option.value"
+          type="button"
+          :class="{ 'is-on': current.autoClose === option.value }"
+          @click="set({ autoClose: option.value })"
+        >
+          {{ option.label }}
+        </button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Animations</h2>
+      <div class="seg">
+        <button
+          v-for="option in MOTIONS"
+          :key="option.value"
+          type="button"
+          :class="{ 'is-on': current.motion === option.value }"
+          @click="set({ motion: option.value as typeof current.motion })"
+        >
+          {{ option.label }}
+        </button>
+      </div>
+    </section>
+
+    <button
+      class="toggle"
+      type="button"
+      role="switch"
+      :aria-checked="current.sound"
+      @click="set({ sound: !current.sound })"
+    >
+      <span>Sound effects</span>
+      <span class="switch" :class="{ 'switch--on': current.sound }"><i /></span>
     </button>
 
-    <button class="toggle" type="button" role="switch" :aria-checked="sound" @click="toggleSound">
-      <span>Sound effects</span>
-      <span class="switch" :class="{ 'switch--on': sound }"><i /></span>
+    <button class="action" type="button" @click="resetRounds">
+      {{ cleared ? "✓ Rounds reset" : "Reset all rounds" }}
     </button>
   </main>
 </template>
@@ -80,108 +106,83 @@ body {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  color: #e7ecf5;
-  background: #12151c;
+  gap: 14px;
+  background: #fff;
+  color: #172b4d;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 .hero {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 14px;
-  background: linear-gradient(120deg, #0c66e4, #8777d9, #ffc400, #0c66e4);
-  background-size: 300% 300%;
-  animation: hero-flow 9s ease infinite;
-}
-.hero__dice {
-  font-size: 26px;
-  animation: hero-roll 4.5s cubic-bezier(0.6, -0.2, 0.3, 1.4) infinite;
+  gap: 8px;
 }
 .hero h1 {
   margin: 0;
   font-size: 15px;
 }
-.hero p {
-  margin: 2px 0 0;
+h2 {
+  margin: 0 0 6px;
   font-size: 11px;
-  opacity: 0.85;
-}
-.panel {
-  padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-}
-.panel h2 {
-  margin: 0 0 8px;
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  opacity: 0.6;
-}
-.rounds {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 12px;
-}
-.rounds li {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-}
-.rounds__board {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.rounds__count {
-  color: #ffc400;
-  flex: none;
-}
-.empty {
-  margin: 0;
-  font-size: 12px;
-  opacity: 0.6;
-}
-.action,
-.toggle {
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 12px;
-  transition: background 0.2s ease, transform 0.15s ease;
-}
-.action {
-  border: 0;
-  background: linear-gradient(120deg, #0c66e4, #8777d9);
+  color: #626f86;
   font-weight: 600;
 }
-.action:hover {
-  transform: translateY(-1px);
+.seg {
+  display: flex;
+  gap: 4px;
 }
-.action--done {
-  background: #36b37e;
+.seg button {
+  flex: 1;
+  padding: 6px 0;
+  font: 500 12px/1.2 inherit;
+  color: #44546f;
+  background: rgba(9, 30, 66, 0.06);
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.seg button:hover {
+  background: rgba(9, 30, 66, 0.1);
+}
+.seg button.is-on {
+  background: #0c66e4;
+  color: #fff;
+}
+.toggle,
+.action {
+  font: 500 13px/1.2 inherit;
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 9px 12px;
 }
 .toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(255, 255, 255, 0.04);
+  color: #172b4d;
+  border: 1px solid #dfe1e6;
+  background: #fff;
+}
+.action {
+  border: 0;
+  color: #fff;
+  background: #0c66e4;
+}
+.action:hover {
+  background: #0055cc;
+}
+.seg button:focus-visible,
+.toggle:focus-visible,
+.action:focus-visible {
+  outline: 2px solid #0c66e4;
+  outline-offset: 2px;
 }
 .switch {
   width: 34px;
   height: 18px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(9, 30, 66, 0.24);
   padding: 2px;
   transition: background 0.2s ease;
 }
@@ -191,36 +192,18 @@ body {
   height: 14px;
   border-radius: 50%;
   background: #fff;
-  transition: transform 0.2s cubic-bezier(0.2, 1.4, 0.3, 1);
+  transition: transform 0.2s ease;
 }
 .switch--on {
-  background: #36b37e;
+  background: #22a06b;
 }
 .switch--on i {
   transform: translateX(16px);
 }
-@keyframes hero-flow {
-  50% {
-    background-position: 100% 50%;
-  }
-}
-@keyframes hero-roll {
-  0%,
-  60%,
-  100% {
-    transform: none;
-  }
-  70% {
-    transform: rotate(180deg) scale(1.2);
-  }
-  80% {
-    transform: rotate(360deg);
-  }
-}
 @media (prefers-reduced-motion: reduce) {
-  .hero,
-  .hero__dice {
-    animation: none;
+  .switch,
+  .switch i {
+    transition: none;
   }
 }
 </style>

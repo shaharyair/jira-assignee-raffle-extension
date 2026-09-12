@@ -30,9 +30,15 @@ export type Assignee = {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** The avatar row inside the fieldset — where our button belongs. */
-export const getFilterBar = () =>
-  document.querySelector<HTMLElement>(`${SELECTORS.filter} > div`);
+/**
+ * The filter row that holds the assignee filter alongside Epic, Type and the
+ * rest: our button belongs beside them, not inside the avatar strip where it
+ * reads as a person. Falls back to the avatar strip if Jira has no wrapper.
+ */
+export const getFilterRow = () => {
+  const filter = document.querySelector<HTMLElement>(SELECTORS.filter);
+  return filter?.parentElement ?? filter?.querySelector<HTMLElement>(":scope > div") ?? null;
+};
 
 const isMenuOpen = () => !!document.querySelector(SELECTORS.hidden);
 
